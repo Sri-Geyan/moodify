@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered Spotify playlist generator that creates emotionally similar playlists from a seed song using mood analysis and vector embeddings.">
+    <title>Moodify — AI Playlist Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-gradient"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- App Container -->
+    <div id="app" class="app">
+
+        <!-- ============================== -->
+        <!-- LOGIN SCREEN                   -->
+        <!-- ============================== -->
+        <section id="login-screen" class="screen active">
+            <div class="login-container">
+                <div class="logo-group">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="22" stroke="url(#grad1)" stroke-width="2.5"/>
+                            <path d="M16 30C16 30 20 24 24 24C28 24 32 30 32 30" stroke="url(#grad1)" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M14 25C14 25 19 18 24 18C29 18 34 25 34 25" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M12 20C12 20 18 12 24 12C30 12 36 20 36 20" stroke="url(#grad2)" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+                            <circle cx="24" cy="34" r="2" fill="url(#grad1)"/>
+                            <defs>
+                                <linearGradient id="grad1" x1="0" y1="0" x2="48" y2="48">
+                                    <stop stop-color="#1DB954"/>
+                                    <stop offset="1" stop-color="#1ed760"/>
+                                </linearGradient>
+                                <linearGradient id="grad2" x1="0" y1="0" x2="48" y2="48">
+                                    <stop stop-color="#8B5CF6"/>
+                                    <stop offset="1" stop-color="#6366F1"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <h1 class="logo-text">Moodify</h1>
+                    <p class="logo-tagline">AI-Powered Playlist Generation</p>
+                </div>
+                <p class="login-description">
+                    Discover songs that <em>feel</em> like your favorites. Our AI analyzes mood, 
+                    themes, and emotional DNA to create playlists that truly resonate.
+                </p>
+                <button id="btn-login" class="btn btn-spotify" onclick="auth.login()">
+                    <svg class="spotify-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                    Connect with Spotify
+                </button>
+                <div class="login-features">
+                    <div class="feature">
+                        <span class="feature-icon">🎭</span>
+                        <span>Mood Analysis</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🧠</span>
+                        <span>AI Embeddings</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🎯</span>
+                        <span>Hybrid Scoring</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================== -->
+        <!-- MAIN APP SCREEN                -->
+        <!-- ============================== -->
+        <section id="main-screen" class="screen">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="header-logo">
+                        <span class="header-logo-icon">🎵</span>
+                        <span class="header-logo-text">Moodify</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="db-badge" id="db-badge" title="Songs in vector database">
+                        <span class="db-icon">⚡</span>
+                        <span id="db-count">0</span> vectors
+                    </div>
+                    <div class="user-info" id="user-info">
+                        <img id="user-avatar" class="user-avatar" src="" alt="User avatar">
+                        <span id="user-name" class="user-name"></span>
+                    </div>
+                    <button class="btn btn-ghost" onclick="auth.logout()">Logout</button>
+                </div>
+            </header>
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <h2 class="section-title">Find Your Seed Song</h2>
+                <p class="section-subtitle">Search for a song to use as the foundation of your AI playlist</p>
+                <div class="search-bar">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search for a song... e.g., Hope by XXXTENTACION" autocomplete="off">
+                    <div class="search-spinner" id="search-spinner"></div>
+                </div>
+                <div class="search-results" id="search-results"></div>
+            </div>
+
+            <!-- Selected Seed Song -->
+            <div class="seed-section" id="seed-section" style="display: none;">
+                <div class="seed-card" id="seed-card">
+                    <div class="seed-art-wrapper">
+                        <img id="seed-art" class="seed-art" src="" alt="Album art">
+                        <div class="seed-art-glow"></div>
+                    </div>
+                    <div class="seed-info">
+                        <span class="seed-label">SEED SONG</span>
+                        <h3 id="seed-name" class="seed-name"></h3>
+                        <p id="seed-artist" class="seed-artist"></p>
+                        <div class="seed-meta">
+                            <span id="seed-album" class="seed-album"></span>
+                            <span id="seed-popularity" class="seed-popularity"></span>
+                        </div>
+                        <div id="seed-genres" class="seed-genres"></div>
+                    </div>
+                </div>
+
+                <!-- Mood Visualization -->
+                <div class="mood-section" id="mood-section" style="display: none;">
+                    <h3 class="mood-title">
+                        <span class="mood-icon">🎭</span> Emotional DNA
+                    </h3>
+                    <div class="mood-grid">
+                        <div class="mood-card">
+                            <canvas id="mood-radar" width="280" height="280"></canvas>
+                        </div>
+                        <div class="mood-details">
+                            <div class="mood-tags" id="mood-tags"></div>
+                            <div class="mood-meters">
+                                <div class="meter">
+                                    <span class="meter-label">Intensity</span>
+                                    <div class="meter-bar"><div class="meter-fill intensity" id="meter-intensity"></div></div>
+                                    <span class="meter-value" id="val-intensity">0</span>
+                                </div>
+                                <div class="meter">
+                                    <span class="meter-label">Energy</span>
+                                    <div class="meter-bar"><div class="meter-fill energy" id="meter-energy"></div></div>
+                                    <span class="meter-value" id="val-energy">0</span>
+                                </div>
+                                <div class="meter">
+                                    <span class="meter-label">Valence</span>
+                                    <div class="meter-bar"><div class="meter-fill valence" id="meter-valence"></div></div>
+                                    <span class="meter-value" id="val-valence">0</span>
+                                </div>
+                            </div>
+                            <p class="mood-description" id="mood-description"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls-section">
+                    <div class="control-row">
+                        <div class="control-group">
+                            <label class="control-label">Playlist Length</label>
+                            <div class="slider-group">
+                                <input type="range" id="playlist-length" min="5" max="50" value="20" class="slider">
+                                <span id="playlist-length-val" class="slider-val">20 songs</span>
+                            </div>
+                        </div>
+                        <div class="control-group nlp-group">
+                            <label class="control-label">Natural Language Prompt <span class="optional">(optional)</span></label>
+                            <input type="text" id="nlp-input" class="nlp-input" placeholder='e.g., "night-drive version" or "more upbeat"'>
+                        </div>
+                    </div>
+                    <button id="btn-generate" class="btn btn-generate" onclick="app.generatePlaylist()">
+                        <span class="btn-icon">✨</span>
+                        Generate AI Playlist
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-section" id="loading-section" style="display: none;">
+                <div class="loading-card">
+                    <div class="loading-animation">
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring delay-1"></div>
+                        <div class="pulse-ring delay-2"></div>
+                        <div class="loading-icon">🧠</div>
+                    </div>
+                    <h3 class="loading-title">Analyzing Emotional DNA...</h3>
+                    <p class="loading-step" id="loading-step">Fetching lyrics and metadata</p>
+                    <div class="loading-progress">
+                        <div class="loading-progress-bar" id="loading-progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="results-section" style="display: none;">
+                <div class="results-header">
+                    <div>
+                        <h2 class="results-title">Your AI Playlist</h2>
+                        <p class="results-subtitle" id="results-subtitle"></p>
+                    </div>
+                    <div class="results-actions">
+                        <button class="btn btn-outline" onclick="app.regenerate()">
+                            🔄 Regenerate
+                        </button>
+                        <button class="btn btn-spotify" id="btn-export" onclick="app.exportToSpotify()">
+                            <svg class="spotify-icon-sm" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                            Export to Spotify
+                        </button>
+                    </div>
+                </div>
+
+                <!-- NLP prompt display -->
+                <div class="nlp-display" id="nlp-display" style="display: none;">
+                    <span class="nlp-label">🗣 Prompt:</span>
+                    <span class="nlp-text" id="nlp-text"></span>
+                </div>
+
+                <!-- Track list -->
+                <div class="track-list" id="track-list"></div>
+
+                <!-- Export Success -->
+                <div class="export-success" id="export-success" style="display: none;">
+                    <div class="export-card">
+                        <span class="export-icon">🎉</span>
+                        <h3>Playlist Created!</h3>
+                        <p>Your AI playlist has been saved to your Spotify account.</p>
+                        <a id="export-link" class="btn btn-spotify" href="" target="_blank" rel="noopener">
+                            Open in Spotify
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/mood.js"></script>
+    <script src="js/playlist.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

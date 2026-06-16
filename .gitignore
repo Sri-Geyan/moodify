@@ -1,0 +1,29 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local SQLite databases
+*.db
+*.sqlite3
+*.sqlite
+
+# Qdrant local storage
+qdrant_storage/
+backend/qdrant_storage/
+
+# Mac OS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
