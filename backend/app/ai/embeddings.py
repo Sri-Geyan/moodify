@@ -1,13 +1,13 @@
 """Embedding generation using HuggingFace Inference API with sentence-transformers."""
 
-from huggingface_hub import InferenceClient
+from huggingface_hub import AsyncInferenceClient
 from app.core.config import get_settings
 from app.ai.schemas import MoodProfile
 
 settings = get_settings()
 
 # Initialize HuggingFace Inference client for embeddings
-hf_client = InferenceClient(
+hf_client = AsyncInferenceClient(
     model=settings.hf_embedding_model,
     token=settings.huggingface_api_token,
 )
@@ -56,7 +56,7 @@ async def generate_embedding(
     text = _build_embedding_text(song_name, artist, mood_profile, lyrics)
 
     try:
-        embedding = hf_client.feature_extraction(text)
+        embedding = await hf_client.feature_extraction(text)
 
         # HF returns nested list for single input — flatten
         if isinstance(embedding, list):
@@ -102,7 +102,7 @@ async def generate_query_embedding(
     text = " ".join(parts)
 
     try:
-        embedding = hf_client.feature_extraction(text)
+        embedding = await hf_client.feature_extraction(text)
 
         if isinstance(embedding, list):
             if isinstance(embedding[0], list):

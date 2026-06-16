@@ -2,7 +2,7 @@
 
 import json
 import re
-from huggingface_hub import InferenceClient
+from huggingface_hub import AsyncInferenceClient
 from app.core.config import get_settings
 from app.ai.schemas import MoodProfile
 from app.ai.prompts import MOOD_EXTRACTION_PROMPT, NLP_QUERY_PROMPT
@@ -10,7 +10,7 @@ from app.ai.prompts import MOOD_EXTRACTION_PROMPT, NLP_QUERY_PROMPT
 settings = get_settings()
 
 # Initialize HuggingFace Inference client
-hf_client = InferenceClient(
+hf_client = AsyncInferenceClient(
     model=settings.hf_llm_model,
     token=settings.huggingface_api_token,
 )
@@ -56,7 +56,7 @@ Lyrics:
 {lyrics_excerpt}"""
 
     try:
-        response = hf_client.text_generation(
+        response = await hf_client.text_generation(
             prompt=f"<s>[INST] {MOOD_EXTRACTION_PROMPT}\n\n{user_message} [/INST]",
             max_new_tokens=600,
             temperature=0.3,
@@ -100,7 +100,7 @@ Current intensity: {seed_mood.emotional_intensity}
 What mood adjustments is the user requesting?"""
 
     try:
-        response = hf_client.text_generation(
+        response = await hf_client.text_generation(
             prompt=f"<s>[INST] {NLP_QUERY_PROMPT}\n\n{user_message} [/INST]",
             max_new_tokens=300,
             temperature=0.3,
