@@ -1,16 +1,19 @@
 """Embedding generation using HuggingFace Inference API with sentence-transformers."""
 
-from huggingface_hub import AsyncInferenceClient
+from sentence_transformers import SentenceTransformer
 from app.core.config import get_settings
 from app.ai.schemas import MoodProfile
 
 settings = get_settings()
 
-# Initialize HuggingFace Inference client for embeddings
-hf_client = AsyncInferenceClient(
-    model=settings.hf_embedding_model,
-    token=settings.huggingface_api_token,
-)
+# Initialize local SentenceTransformer model lazily
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        _model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _model
 
 
 def _build_embedding_text(
@@ -56,16 +59,9 @@ async def generate_embedding(
     text = _build_embedding_text(song_name, artist, mood_profile, lyrics)
 
     try:
-        embedding = await hf_client.feature_extraction(text)
-
-        # HF returns nested list for single input — flatten
-        if isinstance(embedding, list):
-            if isinstance(embedding[0], list):
-                return embedding[0]
-            return embedding
-
-        return list(embedding)
-
+        model = get_model()
+        embedding = model.encode(text).tolist()
+        return embedding
     except Exception as e:
         print(f"Embedding generation failed: {e}")
         raise
@@ -102,15 +98,9 @@ async def generate_query_embedding(
     text = " ".join(parts)
 
     try:
-        embedding = await hf_client.feature_extraction(text)
-
-        if isinstance(embedding, list):
-            if isinstance(embedding[0], list):
-                return embedding[0]
-            return embedding
-
-        return list(embedding)
-
+        model = get_model()
+        embedding = model.encode(text).tolist()
+        return embedding
     except Exception as e:
         print(f"Query embedding generation failed: {e}")
         raise
